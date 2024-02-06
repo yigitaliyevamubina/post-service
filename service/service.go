@@ -30,6 +30,8 @@ func NewPostService(db *sql.DB, log logger.Logger, client grpcclient.IServiceMan
 }
 
 //rpc CreatePost(ReqPost) returns (RespPost);
+//rpc UpdatePost(ReqPost) returns (ReqPost);
+//rpc DeletePost(GetPostId) returns (ReqPost);
 //rpc GetPostById(GetPostId) returns (RespPost);
 //rpc GetPostsByOwnerId(GetOwnerId) returns (OwnerPosts);
 
@@ -96,4 +98,12 @@ func (p *PostService) GetPostsByOwnerId(ctx context.Context, ownerId *pb.GetOwne
 	}
 
 	return ownerPosts, nil
+}
+
+func (p *PostService) UpdatePost(ctx context.Context, post *pb.ReqPost) (*pb.ReqPost, error) {
+	return p.storage.Post().UpdatePost(post)
+}
+
+func (p *PostService) DeletePost(ctx context.Context, postId *pb.GetPostId) (*pb.ReqPost, error) {
+	return p.storage.Post().DeletePost(postId)
 }

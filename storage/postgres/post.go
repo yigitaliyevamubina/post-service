@@ -16,6 +16,8 @@ func NewPostRepo(db *sql.DB) *postRepo {
 }
 
 //rpc CreatePost(ReqPost) returns (RespPost);
+//rpc UpdatePost(ReqPost) returns (ReqPost);
+//rpc DeletePost(GetPostId) returns (ReqPost);
 //rpc GetPostById(GetPostId) returns (RespPost);
 //rpc GetPostsByOwnerId(GetOwnerId) returns (OwnerPosts);
 
@@ -67,4 +69,27 @@ func (p *postRepo) GetPostsByOwnerId(ownerId *pb.GetOwnerId) (*pb.OwnerPosts, er
 	}
 
 	return &respPosts, nil
+}
+
+func (p *postRepo) UpdatePost(reqPost *pb.ReqPost) (*pb.ReqPost, error) {
+	query := `UPDATE posts SET title = $1, image_url = $2, owner_id = $3 WHERE id = $4 RETURNING id, title, image_url, owner_id`
+
+	rowPost := p.db.QueryRow(query, reqPost.Title, reqPost.ImageUrl, reqPost.OwnerId, reqPost.Id)
+	if err := rowPost.Scan(&reqPost.Id, &reqPost.Title, &reqPost.ImageUrl, &reqPost.OwnerId); err != nil {
+		return nil, err
+	}
+
+	return reqPost, nil
+}
+
+func (p *postRepo) DeletePost(postId *pb.GetPostId) (*pb.ReqPost, error) {
+	query := `DELETE FROM posts WHERE id = $1 RETURNING id, title, image_url, owner_id`
+
+	var deletedPost pb.ReqPost
+	rowPost := p.db.QueryRow(query, postId.PostId)
+	if err := rowPost.Scan(&deletedPost.Id, &deletedPost.Title, &deletedPost.ImageUrl, &deletedPost.OwnerId); err != nil {
+		return nil, err 
+	}
+
+	return &deletedPost, nil
 }
