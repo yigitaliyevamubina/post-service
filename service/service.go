@@ -17,7 +17,6 @@ type PostService struct {
 	storage storage.IStorage
 	logger  logger.Logger
 	client  grpcclient.IServiceManager
-	pb.UnimplementedPostServiceServer
 }
 
 // NewPostService
@@ -40,6 +39,23 @@ func (p *PostService) CreatePost(ctx context.Context, post *pb.ReqPost) (*pb.Res
 	if err != nil {
 		log.Fatal("create post", err.Error())
 	}
+
+	user, err := p.client.UserService().GetUserById(ctx, &pbu.GetUserId{
+		UserId: respPost.OwnerId,
+	})
+	if err != nil {
+		log.Fatal("cannot get owner of the post", err.Error())
+	}
+	if respPost.Owner == nil {
+		respPost.Owner = &pb.Owner{}
+	}
+	respPost.Owner.Id = user.Id
+	respPost.Owner.FirstName = user.FirstName
+	respPost.Owner.LastName = user.LastName
+	respPost.Owner.Age = user.Age
+	respPost.Owner.Gender = pb.Gender(user.Gender)
+	respPost.Owner.Email = user.Email
+	respPost.Owner.Password = user.Password
 
 	return respPost, nil
 }
@@ -64,6 +80,8 @@ func (p *PostService) GetPostById(ctx context.Context, postId *pb.GetPostId) (*p
 	respPost.Owner.LastName = user.LastName
 	respPost.Owner.Age = user.Age
 	respPost.Owner.Gender = pb.Gender(user.Gender)
+	respPost.Owner.Email = user.Email
+	respPost.Owner.Password = user.Password
 
 	comments, err := p.client.CommentService().GetAllCommentsByPostId(ctx, &pbc.GetPostID{
 		PostId: respPost.Id,
